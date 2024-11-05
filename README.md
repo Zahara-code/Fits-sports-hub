@@ -51,14 +51,13 @@ We welcome contributions! Please follow these steps to contribute:
 This project is licensed under the MIT License.
 
 ## Contact
-For any inquiries, please contact Zahara-codes via [GitHub](https://github.com/Zahara-code).
+For any inquiries, please contact Zahara-code via [GitHub](https://github.com/Zahara-code).
 
 ## Repository Stats
 ![Stars](https://img.shields.io/github/stars/Zahara-code/Fits-sports-hub?style=social)
 ![Forks](https://img.shields.io/github/forks/Zahara-code/Fits-sports-hub?style=social)
-![Watchers](https://img.shields.io/github/watchers/Zahara-codes
-/Fits-sports-hub?style=social)
+![Watchers](https://img.shields.io/github/watchers/Zahara-code/Fits-sports-hub?style=social)
 ![Visitors](https://visitor-badge.glitch.me/badge?page_id=Zahara-code.Fits-sports-hub)
 ![Version](https://img.shields.io/github/package-json/v/Zahara-code/Fits-sports-hub)
 ![Commits](https://img.shields.io/github/commit-activity/y/Zahara-code/Fits-sports-hub)
-![Pull Requests](https://img.shields.io/github/issues-pr/Zahara-code/Fita-sports-hub)
+![Pull Requests](https://img.shields.io/github/issues-pr/Zahara-code/Fits-sports-hub)
