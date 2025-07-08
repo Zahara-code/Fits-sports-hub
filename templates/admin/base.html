@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %} - Fit Sports Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gray-100">
+    <!-- Admin Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <img class="h-10 w-10 rounded-full" src="/static/img/logo.webp" alt="Logo">
+                    <h1 class="ml-3 text-xl font-semibold text-gray-900">Fit Sports Hub Admin</h1>
+                </div>
+                <nav class="flex space-x-8">
+                    <a href="/admin/dashboard" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                    <a href="/admin/products" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Products</a>
+                    <a href="/admin/payments" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Payments</a>
+                    <a href="/" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">View Store</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Admin Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-sm text-gray-500">
+                © 2025 Fit Sports Hub Admin Panel. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
