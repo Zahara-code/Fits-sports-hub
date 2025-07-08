@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - Fits Sports Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-white">
+    {% include 'header.html' %}
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">All Products</h1>
+        
+        <!-- Search bar -->
+        <div class="mb-8">
+            <form method="get" action="{{ url_for('store.products_page') }}" class="flex gap-4">
+                <input type="text" name="search" value="{{ search }}" 
+                       placeholder="Search products..." 
+                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Search
+                </button>
+            </form>
+        </div>
+        
+        <!-- Products grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for product in products %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" 
+                     class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ product.name }}</h3>
+                    <p class="text-gray-600 text-sm mb-3">{{ product.description }}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xl font-bold text-blue-600">
+                            ${{ "%.2f"|format(product.price) }}
+                        </span>
+                        {% if product.in_stock %}
+                        <span class="text-green-600 text-sm">In Stock</span>
+                        {% else %}
+                        <span class="text-red-600 text-sm">Out of Stock</span>
+                        {% endif %}
+                    </div>
+                    <a href="{{ url_for('store.product_detail_page', product_id=product.id) }}" 
+                       class="mt-4 block w-full text-center bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="mt-8 flex justify-center">
+            <nav class="flex space-x-2">
+                {% for page_num in range(1, pagination.pages + 1) %}
+                <a href="{{ url_for('store.products_page', page=page_num, search=search) }}" 
+                   class="px-4 py-2 {% if page_num == pagination.current_page %}bg-blue-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %} rounded">
+                    {{ page_num }}
+                </a>
+                {% endfor %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% include 'footer.html' %}
+</body>
+</html>
