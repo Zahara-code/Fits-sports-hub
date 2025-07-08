@@ -1,0 +1,159 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Product Management{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0" x-data="{ 
+    showAddProduct: false, 
+    showAddCategory: false,
+    selectedProduct: null,
+    showImageUpload: false
+}">
+    <!-- Header -->
+    <div class="sm:flex sm:items-center">
+        <div class="sm:flex-auto">
+            <h1 class="text-2xl font-semibold text-gray-900">Product Management</h1>
+            <p class="mt-2 text-sm text-gray-700">Manage your sports equipment inventory, categories, pricing, and stock levels.</p>
+        </div>
+        <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-3">
+            <button @click="showAddCategory = true" class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+                Add Category
+            </button>
+            <button @click="showAddProduct = true" class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+                Add Product
+            </button>
+        </div>
+    </div>
+
+    <!-- Categories Section -->
+    <div class="mt-8 bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Categories</h3>
+            <div id="categories-list" hx-get="/api/store/categories" hx-trigger="load" hx-swap="innerHTML">
+                Loading categories...
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Section -->
+    <div class="mt-8 bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Products</h3>
+            
+            <!-- Search and Filter -->
+            <div class="mb-4 flex flex-col sm:flex-row gap-4">
+                <input type="text" placeholder="Search products..." 
+                       class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                       hx-post="/api/store/search" hx-trigger="keyup changed delay:500ms" hx-target="#products-list">
+                <select class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        hx-get="/api/store/products" hx-trigger="change" hx-target="#products-list">
+                    <option value="">All Categories</option>
+                    <option value="1">Sports Equipment</option>
+                    <option value="2">Apparel</option>
+                    <option value="3">Footwear</option>
+                </select>
+            </div>
+
+            <div id="products-list" hx-get="/api/store/products" hx-trigger="load" hx-swap="innerHTML">
+                Loading products...
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div x-show="showAddCategory" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Category</h3>
+                <form hx-post="/api/products/categories" hx-target="#categories-list" hx-swap="innerHTML" 
+                      @htmx:after-request="showAddCategory = false">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Category Name</label>
+                        <input type="text" name="name" required 
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea name="description" rows="3" 
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" @click="showAddCategory = false" 
+                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            Add Category
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div x-show="showAddProduct" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Product</h3>
+                <form hx-post="/api/products" hx-target="#products-list" hx-swap="innerHTML" 
+                      @htmx:after-request="showAddProduct = false">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Product Name</label>
+                        <input type="text" name="name" required 
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Category</label>
+                        <select name="category_id" required 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                hx-get="/api/store/categories/options" hx-trigger="load">
+                            <option value="">Select Category</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea name="description" rows="3" 
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" @click="showAddProduct = false" 
+                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            Add Product
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Details Modal -->
+    <div x-show="selectedProduct" x-cloak class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Product Details</h3>
+                    <button @click="selectedProduct = null" class="text-gray-400 hover:text-gray-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="product-details" class="space-y-6">
+                    <!-- Content loaded via HTMX when product is selected -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+[x-cloak] { display: none !important; }
+</style>
+{% endblock %}
