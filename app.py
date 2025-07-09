@@ -4,6 +4,7 @@ from config import Config
 from routes.product_bp import bp as product_bp, api_bp
 from routes.store_bp import store_bp
 from routes.admin_bp import admin_bp
+from routes.auth import auth_bp, admin_auth_bp
 import os
 
 app = Flask(__name__)
@@ -19,6 +20,8 @@ os.makedirs(os.path.join(app.root_path, 'static', 'uploads', 'products'), exist_
 
 # Register blueprints
 app.register_blueprint(product_bp)
+app.register_blueprint(auth_bp)
+app.register_blueprint(admin_auth_bp)  # Register API blueprint
 app.register_blueprint(admin_bp, url_prefix='/admin')  # Add URL prefix for admin routes
 app.register_blueprint(store_bp, url_prefix='/store')  # Add URL prefix for store routes
 app.register_blueprint(api_bp, url_prefix='/api')  # Add URL prefix for API
