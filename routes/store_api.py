@@ -1,5 +1,5 @@
 # routes/store_api.py
-from flask import request
+from flask import request, jsonify
 from flask_restx import Namespace, Resource, fields
 from services.store_service import StoreService
 from models.product import db, Product, Category, Price, Stock
@@ -103,11 +103,24 @@ class ProductList(Resource):
     def get(self):
         """Get products with pagination and search"""
         args = search_parser.parse_args()
-        return service.get_all_products(
+        result = service.get_all_products(
             page=args['page'], 
             per_page=args['per_page'], 
             search=args['search']
         )
+        
+        # Ensure pagination info is complete
+        return {
+            'items': result.get('items', []),
+            'pagination': {
+                'page': result.get('current_page', args['page']),
+                'per_page': args['per_page'],
+                'total': result.get('total', 0),
+                'pages': result.get('pages', 0),
+                'has_prev': result.get('current_page', 1) > 1,
+                'has_next': result.get('current_page', 1) < result.get('pages', 0)
+            }
+        }
 
 @store_api.route('/category/<int:category_id>/products')
 @store_api.param('category_id', 'The category identifier')
@@ -215,3 +228,54 @@ class StoreProductList(Resource):
             }
             result.append(item)
         return result
+
+@store_api.route('/categories/options')
+class CategoryOptions(Resource):
+    def get(self):
+        """Get categories for dropdown"""
+        categories = Category.query.all()
+        options_html = '<option value="">Select Category</option>'
+        for cat in categories:
+            options_html += f'<option value="{cat.id}">{cat.name}</option>'
+        return options_html, 200, {'Content-Type': 'text/html'}
+
+@store_api.route('/categories')
+class CategoriesList(Resource):
+    def get(self):
+        """Get all categories"""
+        categories = Category.query.all()
+        return jsonify([{
+            'id': cat.id,
+            'name': cat.name,
+            'description': cat.description
+        } for cat in categories])
+
+@store_api.route('/stats/products')
+class ProductStats(Resource):
+    def get(self):
+        """Get total number of products"""
+        try:
+            count = Product.query.count()
+            return str(count), 200, {'Content-Type': 'text/plain'}
+        except:
+            return "0", 200, {'Content-Type': 'text/plain'}
+
+@store_api.route('/stats/categories')
+class CategoryStats(Resource):
+    def get(self):
+        """Get total number of categories"""
+        try:
+            count = Category.query.count()
+            return str(count), 200, {'Content-Type': 'text/plain'}
+        except:
+            return "0", 200, {'Content-Type': 'text/plain'}
+
+@store_api.route('/stats/low-stock')
+class LowStockStats(Resource):
+    def get(self):
+        """Get number of low stock items (less than 10)"""
+        try:
+            count = Stock.query.filter(Stock.quantity < 10).count()
+            return str(count), 200, {'Content-Type': 'text/plain'}
+        except:
+            return "0", 200, {'Content-Type': 'text/plain'}
