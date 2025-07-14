@@ -1,0 +1,161 @@
+{% extends "store/base.html" %}
+
+{% block title %}Shop - Fit Sports Hub{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative bg-gradient-to-r from-blue-600 to-purple-600 py-20">
+    <div class="container mx-auto px-4">
+        <div class="text-center text-white">
+            <h1 class="text-5xl font-bold mb-4">Welcome to Fit Sports Hub</h1>
+            <p class="text-xl mb-8">Your one-stop shop for premium sports equipment</p>
+            <a href="/store/products" class="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                Shop Now
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-16">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-12">Shop by Category</h2>
+        <div id="categories-grid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Categories will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+<section class="py-16 bg-gray-100">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-12">Featured Products</h2>
+        <div id="featured-products" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Products will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Special Offers -->
+<section class="py-16">
+    <div class="container mx-auto px-4">
+        <div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-12 text-center">
+            <h2 class="text-4xl font-bold text-white mb-4">Limited Time Offer!</h2>
+            <p class="text-xl text-white mb-8">Get 20% off on all running shoes this week</p>
+            <a href="/store/products?category=running" class="inline-block bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                Shop Running Shoes
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load categories
+function loadCategories() {
+    fetch('/api/store/categories')
+        .then(response => response.json())
+        .then(categories => {
+            const grid = document.getElementById('categories-grid');
+            let html = '';
+            
+            categories.forEach(category => {
+                html += `
+                    <a href="/store/products?category=${category.id}" class="group block">
+                        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+                            <div class="aspect-w-1 aspect-h-1 bg-gradient-to-br from-blue-100 to-purple-100 p-8">
+                                <div class="flex items-center justify-center h-full">
+                                    <svg class="w-16 h-16 text-blue-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="text-lg font-semibold text-gray-900">${category.name}</h3>
+                                <p class="text-sm text-gray-600 mt-1">${category.product_count} products</p>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            });
+            
+            grid.innerHTML = html || '<p class="col-span-full text-center text-gray-500">No categories available</p>';
+        })
+        .catch(error => {
+            console.error('Error loading categories:', error);
+            document.getElementById('categories-grid').innerHTML = '<p class="col-span-full text-center text-red-500">Error loading categories</p>';
+        });
+}
+
+// Load featured products
+function loadFeaturedProducts() {
+    // First try the featured endpoint, fallback to regular products
+    fetch('/api/store/featured?limit=8')
+        .then(response => {
+            if (!response.ok) {
+                // If featured endpoint fails, use regular products endpoint
+                return fetch('/api/store/products?per_page=8');
+            }
+            return response;
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle both response formats
+            const products = data.items || data;
+            const grid = document.getElementById('featured-products');
+            let html = '';
+            
+            if (Array.isArray(products)) {
+                products.forEach(product => {
+                    const imageUrl = product.images && product.images.length > 0 
+                        ? product.images[0] 
+                        : '/static/img/placeholder.png';
+                    
+                    const inStock = product.stock_quantity > 0 || product.in_stock;
+                    
+                    html += `
+                        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+                            <a href="/store/product/${product.id}" class="block">
+                                <div class="aspect-w-1 aspect-h-1">
+                                    <img src="${imageUrl}" alt="${product.name}" class="w-full h-64 object-cover" onerror="this.src='/static/img/placeholder.png'">
+                                </div>
+                                <div class="p-4">
+                                    <h3 class="text-lg font-semibold text-gray-900">${product.name}</h3>
+                                    <p class="text-sm text-gray-600 mt-1 line-clamp-2">${product.description}</p>
+                                    <div class="mt-4 flex items-center justify-between">
+                                        <span class="text-2xl font-bold text-blue-600">$${product.price.toFixed(2)}</span>
+                                        ${inStock 
+                                            ? '<span class="text-sm text-green-600">In Stock</span>'
+                                            : '<span class="text-sm text-red-600">Out of Stock</span>'
+                                        }
+                                    </div>
+                                </div>
+                            </a>
+                            <div class="px-4 pb-4">
+                                <button onclick="addToCart(${product.id})" 
+                                        class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors ${!inStock ? 'opacity-50 cursor-not-allowed' : ''}"
+                                        ${!inStock ? 'disabled' : ''}>
+                                    ${inStock ? 'Add to Cart' : 'Out of Stock'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            grid.innerHTML = html || '<p class="col-span-full text-center text-gray-500">No products available</p>';
+        })
+        .catch(error => {
+            console.error('Error loading featured products:', error);
+            document.getElementById('featured-products').innerHTML = '<p class="col-span-full text-center text-red-500">Error loading products</p>';
+        });
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+    loadFeaturedProducts();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - Fits Sports Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-white">
+    {% include 'header.html' %}
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">All Products</h1>
+        
+        <!-- Search bar -->
+        <div class="mb-8">
+            <form method="get" action="{{ url_for('store.products_page') }}" class="flex gap-4">
+                <input type="text" name="search" value="{{ search }}" 
+                       placeholder="Search products..." 
+                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Search
+                </button>
+            </form>
+        </div>
+        
+        <!-- Products grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for product in products %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" 
+                     class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ product.name }}</h3>
+                    <p class="text-gray-600 text-sm mb-3">{{ product.description }}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xl font-bold text-blue-600">
+                            ${{ "%.2f"|format(product.price) }}
+                        </span>
+                        {% if product.in_stock %}
+                        <span class="text-green-600 text-sm">In Stock</span>
+                        {% else %}
+                        <span class="text-red-600 text-sm">Out of Stock</span>
+                        {% endif %}
+                    </div>
+                    <a href="{{ url_for('store.product_detail_page', product_id=product.id) }}" 
+                       class="mt-4 block w-full text-center bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="mt-8 flex justify-center">
+            <nav class="flex space-x-2">
+                {% for page_num in range(1, pagination.pages + 1) %}
+                <a href="{{ url_for('store.products_page', page=page_num, search=search) }}" 
+                   class="px-4 py-2 {% if page_num == pagination.current_page %}bg-blue-600 text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %} rounded">
+                    {{ page_num }}
+                </a>
+                {% endfor %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% include 'footer.html' %}
+</body>
+</html>
+
+{% extends "store/base.html" %}
+
+{% block title %}Products - Fit Sports Hub{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar Filters -->
+        <aside class="lg:w-64">
+            <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+                <h3 class="text-lg font-semibold mb-4">Filters</h3>
+                
+                <!-- Categories -->
+                <div class="mb-6">
+                    <h4 class="font-medium mb-3">Categories</h4>
+                    <div id="category-filters" class="space-y-2">
+                        <!-- Category checkboxes will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Price Range -->
+                <div class="mb-6">
+                    <h4 class="font-medium mb-3">Price Range</h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="price" value="0-25" class="mr-2" onchange="filterProducts()">
+                            <span>Under $25</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="price" value="25-50" class="mr-2" onchange="filterProducts()">
+                            <span>$25 - $50</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="price" value="50-100" class="mr-2" onchange="filterProducts()">
+                            <span>$50 - $100</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="price" value="100+" class="mr-2" onchange="filterProducts()">
+                            <span>Over $100</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Stock Status -->
+                <div class="mb-6">
+                    <h4 class="font-medium mb-3">Availability</h4>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="in-stock-only" class="mr-2" onchange="filterProducts()">
+                        <span>In Stock Only</span>
+                    </label>
+                </div>
+                
+                <button onclick="clearFilters()" class="w-full text-blue-600 hover:text-blue-800 text-sm">
+                    Clear All Filters
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="flex-1">
+            <!-- Search and Sort -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1">
+                        <input type="text" 
+                               id="search-input"
+                               placeholder="Search products..." 
+                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               onkeyup="debounceSearch()">
+                    </div>
+                    <div class="md:w-48">
+                        <select id="sort-select" 
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="sortProducts()">
+                            <option value="name">Sort by Name</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="newest">Newest First</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products Grid -->
+            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Products will be loaded here -->
+                <div class="col-span-full text-center py-8">
+                    <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-gray-600 bg-white">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Loading products...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div id="pagination" class="mt-8 flex justify-center">
+                <!-- Pagination will be loaded here -->
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentPage = 1;
+let searchTimeout;
+
+// Load categories for filters
+function loadCategoryFilters() {
+    fetch('/api/store/categories')
+        .then(response => response.json())
+        .then(categories => {
+            const container = document.getElementById('category-filters');
+            let html = '';
+            
+            categories.forEach(category => {
+                html += `
+                    <label class="flex items-center">
+                        <input type="checkbox" 
+                               name="category" 
+                               value="${category.id}" 
+                               class="mr-2"
+                               onchange="filterProducts()">
+                        <span>${category.name} (${category.product_count})</span>
+                    </label>
+                `;
+            });
+            
+            container.innerHTML = html;
+        });
+}
+
+// Load products with filters
+function loadProducts(page = 1) {
+    currentPage = page;
+    const searchTerm = document.getElementById('search-input').value;
+    const params = new URLSearchParams({
+        page: page,
+        per_page: 12,
+        search: searchTerm
+    });
+    
+    // Add category filters
+    const selectedCategories = Array.from(document.querySelectorAll('input[name="category"]:checked'))
+        .map(cb => cb.value);
+    if (selectedCategories.length > 0) {
+        params.append('categories', selectedCategories.join(','));
+    }
+    
+    // Add price filter
+    const priceRange = document.querySelector('input[name="price"]:checked');
+    if (priceRange) {
+        params.append('price_range', priceRange.value);
+    }
+    
+    // Add stock filter
+    if (document.getElementById('in-stock-only').checked) {
+        params.append('in_stock', 'true');
+    }
+    
+    // Add sort
+    const sortBy = document.getElementById('sort-select').value;
+    params.append('sort', sortBy);
+    
+    fetch(`/api/store/products?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            // Handle the items/pagination structure
+            if (data.items) {
+                renderProducts(data.items);
+                renderPagination(data.pagination);
+            } else {
+                console.error('Unexpected response format:', data);
+                renderProducts([]);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading products:', error);
+            renderProducts([]);
+        });
+}
+
+// Render products grid
+function renderProducts(products) {
+    const grid = document.getElementById('products-grid');
+    
+    if (!products || products.length === 0) {
+        grid.innerHTML = `
+            <div class="col-span-full text-center py-12">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-gray-500">No products found matching your criteria.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    products.forEach(product => {
+        const imageUrl = product.images && product.images.length > 0 
+            ? product.images[0] 
+            : '/static/img/placeholder.png';
+        
+        const inStock = product.stock_quantity > 0;
+        
+        html += `
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+                <a href="/store/product/${product.id}" class="block">
+                    <div class="aspect-w-1 aspect-h-1">
+                        <img src="${imageUrl}" alt="${product.name}" class="w-full h-64 object-cover" onerror="this.src='/static/img/placeholder.png'">
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold text-gray-900">${product.name}</h3>
+                        <p class="text-sm text-gray-600 mt-1 line-clamp-2">${product.description}</p>
+                        <div class="mt-4 flex items-center justify-between">
+                            <span class="text-2xl font-bold text-blue-600">$${product.price.toFixed(2)}</span>
+                            ${inStock 
+                                ? `<span class="text-sm text-green-600">${product.stock_quantity} in stock</span>`
+                                : '<span class="text-sm text-red-600">Out of Stock</span>'
+                            }
+                        </div>
+                    </div>
+                </a>
+                <div class="px-4 pb-4">
+                    <button onclick="addToCart(${product.id})" 
+                            class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors ${!inStock ? 'opacity-50 cursor-not-allowed' : ''}"
+                            ${!inStock ? 'disabled' : ''}>
+                        ${inStock ? 'Add to Cart' : 'Out of Stock'}
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    grid.innerHTML = html;
+}
+
+// Render pagination
+function renderPagination(pagination) {
+    const container = document.getElementById('pagination');
+    if (!pagination || pagination.pages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="flex gap-2">';
+    
+    // Previous button
+    if (pagination.has_prev) {
+        html += `<button onclick="loadProducts(${pagination.page - 1})" class="px-4 py-2 border rounded hover:bg-gray-100">Previous</button>`;
+    }
+    
+    // Page numbers
+    for (let i = 1; i <= pagination.pages; i++) {
+        if (i === pagination.page) {
+            html += `<span class="px-4 py-2 bg-blue-600 text-white rounded">${i}</span>`;
+        } else {
+            html += `<button onclick="loadProducts(${i})" class="px-4 py-2 border rounded hover:bg-gray-100">${i}</button>`;
+        }
+    }
+    
+    // Next button
+    if (pagination.has_next) {
+        html += `<button onclick="loadProducts(${pagination.page + 1})" class="px-4 py-2 border rounded hover:bg-gray-100">Next</button>`;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Filter functions
+function filterProducts() {
+    loadProducts(1);
+}
+
+function sortProducts() {
+    loadProducts(currentPage);
+}
+
+function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        loadProducts(1);
+    }, 500);
+}
+
+function clearFilters() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('input[type="radio"]').forEach(rb => rb.checked = false);
+    document.getElementById('search-input').value = '';
+    loadProducts(1);
+}
+
+// Load initial data
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategoryFilters();
+    loadProducts();
+    
+    // Check for category parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryId = urlParams.get('category');
+    if (categoryId) {
+        setTimeout(() => {
+            const categoryCheckbox = document.querySelector(`input[name="category"][value="${categoryId}"]`);
+            if (categoryCheckbox) {
+                categoryCheckbox.checked = true;
+                filterProducts();
+            }
+        }, 500);
+    }
+});
+</script>
+{% endblock %}

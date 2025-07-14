@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin - Fit Sports Hub{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen flex">
+        <!-- Sidebar -->
+        <div class="bg-gray-800 text-white w-64 py-4 px-6">
+            <h2 class="text-2xl font-semibold mb-6">Admin Panel</h2>
+            <nav class="space-y-2">
+                <a href="/admin/dashboard" class="block py-2.5 px-4 rounded hover:bg-gray-700">Dashboard</a>
+                <a href="/admin/products" class="block py-2.5 px-4 rounded hover:bg-gray-700">Products</a>
+                <a href="/admin/payments" class="block py-2.5 px-4 rounded hover:bg-gray-700">Payments</a>
+                <a href="/admin/auth/logout" class="block py-2.5 px-4 rounded hover:bg-gray-700 mt-8">Logout</a>
+            </nav>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1">
+            <header class="bg-white shadow">
+                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                    <h1 class="text-3xl font-bold text-gray-900">{% block header %}Admin Dashboard{% endblock %}</h1>
+                </div>
+            </header>
+            
+            <main>
+                <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

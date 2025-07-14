@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Fit Sports Hub - Shop{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gray-50">
+    {% include 'header.html' %}
+    
+    <main class="min-h-screen">
+        {% block content %}{% endblock %}
+    </main>
+    
+    {% include 'footer.html' %}
+    
+    <!-- Cart Sidebar -->
+    <div id="cart-sidebar" class="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex flex-col h-full">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h2 class="text-xl font-bold">Shopping Cart</h2>
+                <button onclick="toggleCart()" class="p-2 hover:bg-gray-100 rounded-full">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4" id="cart-items">
+                <!-- Cart items will be loaded here -->
+            </div>
+            <div class="border-t p-4">
+                <div class="flex justify-between mb-4">
+                    <span class="font-semibold">Total:</span>
+                    <span class="font-bold text-xl" id="cart-total">$0.00</span>
+                </div>
+                <a href="/store/checkout" class="block w-full bg-blue-600 text-white text-center py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                    Checkout
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cart Overlay -->
+    <div id="cart-overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40" onclick="toggleCart()"></div>
+    
+    <script>
+        // Cart functionality
+        function toggleCart() {
+            const sidebar = document.getElementById('cart-sidebar');
+            const overlay = document.getElementById('cart-overlay');
+            
+            if (sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                loadCart();
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+        
+        function loadCart() {
+            fetch('/api/checkout/cart')
+                .then(response => response.json())
+                .then(data => {
+                    updateCartDisplay(data);
+                })
+                .catch(error => {
+                    console.error('Error loading cart:', error);
+                    document.getElementById('cart-items').innerHTML = '<p class="text-red-500 text-center">Error loading cart</p>';
+                });
+        }
+        
+        function updateCartDisplay(cartData) {
+            const cartItems = document.getElementById('cart-items');
+            const cartTotal = document.getElementById('cart-total');
+            const cartCount = document.getElementById('cart-count');
+            
+            if (!cartData || !cartData.items || cartData.items.length === 0) {
+                cartItems.innerHTML = '<p class="text-gray-500 text-center">Your cart is empty</p>';
+                cartTotal.textContent = '$0.00';
+                if (cartCount) cartCount.textContent = '0';
+                return;
+            }
+            
+            let html = '';
+            cartData.items.forEach(item => {
+                const imageUrl = item.image ? `/static/${item.image}` : '/static/img/placeholder.png';
+                html += `
+                    <div class="flex items-center gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
+                        <img src="${imageUrl}" alt="${item.product_name}" class="w-16 h-16 object-cover rounded" onerror="this.src='/static/img/placeholder.png'">
+                        <div class="flex-1">
+                            <h4 class="font-semibold">${item.product_name}</h4>
+                            <p class="text-sm text-gray-600">$${item.unit_price.toFixed(2)} each</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="updateCartItem(${item.product_id}, ${item.quantity - 1})" class="p-1 hover:bg-gray-200 rounded">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                </svg>
+                            </button>
+                            <span class="w-8 text-center">${item.quantity}</span>
+                            <button onclick="updateCartItem(${item.product_id}, ${item.quantity + 1})" class="p-1 hover:bg-gray-200 rounded">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                            </button>
+                            <button onclick="removeFromCart(${item.product_id})" class="p-1 hover:bg-red-100 rounded text-red-600 ml-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            cartItems.innerHTML = html;
+            cartTotal.textContent = `$${cartData.total.toFixed(2)}`;
+            if (cartCount) cartCount.textContent = cartData.item_count;
+        }
+        
+        function addToCart(productId, quantity = 1) {
+            fetch('/api/checkout/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: quantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadCart();
+                    // Show success message
+                    showNotification('Product added to cart!', 'success');
+                } else {
+                    showNotification(data.error || 'Failed to add to cart', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding to cart:', error);
+                showNotification('Error adding to cart', 'error');
+            });
+        }
+        
+        function updateCartItem(productId, quantity) {
+            if (quantity < 0) return;
+            
+            fetch(`/api/checkout/cart/update/${productId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ quantity: quantity })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadCart();
+                }
+            });
+        }
+        
+        function removeFromCart(productId) {
+            updateCartItem(productId, 0);
+        }
+        
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // Load cart count on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCart();
+            
+            // Cart button click handler
+            const cartBtn = document.getElementById('cart-btn');
+            if (cartBtn) {
+                cartBtn.addEventListener('click', toggleCart);
+            }
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
