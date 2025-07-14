@@ -20,3 +20,6 @@ build
 *.idea
 *.vscode
 *.swp
+.env.example
+__pycache__
+*.mypy_cache
