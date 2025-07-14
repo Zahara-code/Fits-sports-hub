@@ -122,3 +122,28 @@ def add_to_cart():
     
     # TODO: Implement cart service integration
     return jsonify({'message': 'Product added to cart', 'product_id': product_id, 'quantity': quantity})
+
+@store_bp.route('/')
+def index():
+    """Store homepage"""
+    return render_template('store/index.html')
+
+@store_bp.route('/products')
+def products():
+    """Products listing page"""
+    return render_template('store/products.html')
+
+@store_bp.route('/product/<int:product_id>')
+def product_detail(product_id):
+    """Product detail page"""
+    return render_template('store/product_detail.html', product_id=product_id)
+
+@store_bp.route('/cart')
+def cart():
+    """Shopping cart page"""
+    return render_template('store/cart.html')
+
+@store_bp.route('/checkout')
+def checkout():
+    """Checkout page"""
+    return render_template('store/checkout.html')
