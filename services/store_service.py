@@ -1,5 +1,6 @@
 # services/store_service.py
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 from models.product import db, Category, Product, ProductImage, Stock, Price
 
 
@@ -40,7 +41,12 @@ class StoreService:
 
     def get_all_products(self, page=1, per_page=12, search=None):
         """Get all products with optional search"""
-        query = Product.query
+        query = Product.query.options(
+            joinedload(Product.category),
+            joinedload(Product.price),
+            joinedload(Product.stock),
+            joinedload(Product.images)
+        )
         
         if search:
             query = query.filter(
@@ -113,19 +119,30 @@ class StoreService:
 
     def _format_product_summary(self, product):
         """Format product for listing views"""
-        price = Price.query.filter_by(product_id=product.id).first()
-        stock = Stock.query.filter_by(product_id=product.id).first()
-        first_image = ProductImage.query.filter_by(product_id=product.id).first()
+        # Access already loaded relationships (no additional queries)
+        price = product.price
+        stock = product.stock
+        images = product.images
+        
+        # Get image URLs
+        image_urls = []
+        if images:
+            for img in images:
+                image_urls.append(f'/static/{img.filepath}')
         
         return {
             'id': product.id,
             'name': product.name,
             'description': product.description[:100] + '...' if product.description and len(product.description) > 100 else product.description,
-            'category_name': product.category.name,
+            'category': {
+                'id': product.category.id if product.category else None,
+                'name': product.category.name if product.category else 'No category'
+            },
             'price': float(price.amount) if price else 0,
             'currency': price.currency if price else 'USD',
+            'stock_quantity': stock.quantity if stock else 0,
             'in_stock': stock.quantity > 0 if stock else False,
-            'image_url': f'/static/{first_image.filepath}' if first_image else '/static/img/placeholder.jpg'
+            'images': image_urls if image_urls else ['/static/img/placeholder.jpg']
         }
 
     def check_product_availability(self, product_id, quantity=1):
