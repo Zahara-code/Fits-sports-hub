@@ -4,6 +4,7 @@ from flask_restx import Namespace, Resource, fields, Api
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 import os
+import time
 from models.product import db, Category, Product, ProductImage, Stock, Price
 from routes.admin_api import admin_api
 from routes.checkout_api import checkout_api
@@ -88,7 +89,8 @@ class ProductImages(Resource):
             filename = secure_filename(uploaded_file.filename)
             
             # Create unique filename to avoid conflicts
-            unique_filename = f"{product_id}_{int(db.func.current_timestamp())}_{filename}"
+            timestamp = int(time.time())
+            unique_filename = f"{product_id}_{timestamp}_{filename}"
             
             # Define upload path
             upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'products')
@@ -141,7 +143,9 @@ restx_api = Api(api_bp,
     description='Admin product management and store operations',
     doc='/docs'  # This sets the Swagger UI path
 )
-restx_api.add_namespace(api, path='/products')  # Add path prefix for the namespace
+
+# Register namespaces with clear paths
+restx_api.add_namespace(api, path='/products')
 restx_api.add_namespace(store_api, path='/store')
 restx_api.add_namespace(checkout_api, path='/checkout')
-restx_api.add_namespace(admin_api, path='/admin')  # Add store namespace
+restx_api.add_namespace(admin_api, path='/admin')
